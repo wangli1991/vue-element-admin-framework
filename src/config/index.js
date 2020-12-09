@@ -2,7 +2,7 @@
  * @Author: 王利
  * @Date: 2020-11-27 12:32:00
  * @LastEditors: 王利
- * @LastEditTime: 2020-11-27 13:51:22
+ * @LastEditTime: 2020-12-08 16:42:10
  */
 const config = {
   systemName: "CS系统", // 系统名称
@@ -13,7 +13,7 @@ const config = {
   maxCacheNum: 10, // 路由组件最大缓存数量
   showSidebarLogo: true, // 是否显示左侧菜单logo
   showTagsView: true, // 是否显示头部已选菜单
-  showBreadcrumb: true, // 是否显示面包屑
+  showBreadcrumb: false, // 是否显示面包屑
   showScreenFull: true, // 是否显示全屏按钮
   showThemePicker: true, // 是否显示主题切换
   showSizeSelect: true, // 是否显示尺寸选择
@@ -40,6 +40,14 @@ const config = {
     boxShadow: "0 0 4px rgba(0, 0, 0, 0.35)",
     // 坐标轴颜色
     lineColor: "rgba(0, 0, 0, 0.35)"
+  },
+  // vDesign 组件库的全局配置
+  vDesign: {
+    Drawer_maskClosable: true,
+    BaseDialog_maskClosable: true,
+    VirtualTable_onlyShowIcon: true,
+    TopFilter_showLabelErrorColor: false,
+    FormPanel_showLabelErrorColor: false
   },
   errorLog: ["production", "development"] // 错误日志 赋值：'production' | ['production', 'development']
 };

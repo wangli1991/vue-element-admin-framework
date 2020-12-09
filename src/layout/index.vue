@@ -2,47 +2,51 @@
  * @Author: 王利
  * @Date: 2020-10-26 15:09:10
  * @LastEditors: 王利
- * @LastEditTime: 2020-11-27 13:27:42
+ * @LastEditTime: 2020-12-08 14:57:44
 -->
 <template>
-  <div :class="classObj" class="app-wrapper">
-    <sidebar class="sidebar-container" />
-    <div class="main-container hasTagsView">
-      <div class="fixed-header">
+  <el-container class="layout">
+    <el-aside :width="asideWidth" class="sidebar">
+      <sidebar />
+    </el-aside>
+    <el-container>
+      <el-header height="" :class="headerCls">
         <head-navbar />
-        <tags-view v-if="config.showTagsView" />
-      </div>
-      <app-main />
-    </div>
-  </div>
+      </el-header>
+      <el-main class="app-main">
+        <app-main />
+      </el-main>
+    </el-container>
+  </el-container>
 </template>
 
 <script>
-import { AppMain, HeadNavbar, Sidebar, TagsView } from "./components";
-import ResizeMixin from "./mixin/ResizeHandler";
+import { AppMain, HeadNavbar, Sidebar } from "./components";
 import { mapState } from "vuex";
 import config from "@/config";
+import { size } from "@/mixins/sizeMixin";
+
 export default {
   name: "Layout",
   components: {
     AppMain,
     HeadNavbar,
-    Sidebar,
-    TagsView
+    Sidebar
   },
-  mixins: [ResizeMixin],
+  mixins: [size],
   computed: {
     config() {
       return config;
     },
-    ...mapState({
-      sidebar: state => state.app.sidebar
-    }),
-    classObj() {
+    ...mapState("app", ["sidebarOpened"]),
+    asideWidth() {
+      return this.sidebarOpened ? "210px" : "54px";
+    },
+    headerCls() {
       return {
-        hideSidebar: !this.sidebar.opened,
-        openSidebar: this.sidebar.opened,
-        withoutAnimation: this.sidebar.withoutAnimation
+        [`header`]: !0,
+        [`header-sm`]: this.currentSize === "small",
+        [`header-lg`]: this.currentSize === "large"
       };
     }
   }
@@ -50,45 +54,29 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "~@/styles/mixin.scss";
-@import "~@/styles/variables.scss";
-
-.app-wrapper {
-  @include clearfix;
-  position: relative;
+.layout {
   height: 100%;
-  width: 100%;
-
-  &.mobile.openSidebar {
-    position: fixed;
-    top: 0;
+  .sidebar {
+    transition: width 0.3s ease;
+    overflow: visible;
   }
-}
-
-.drawer-bg {
-  background: #000;
-  opacity: 0.3;
-  width: 100%;
-  top: 0;
-  height: 100%;
-  position: absolute;
-  z-index: 999;
-}
-
-.fixed-header {
-  position: fixed;
-  top: 0;
-  right: 0;
-  z-index: 9;
-  width: calc(100% - #{$sideBarWidth});
-  transition: width 0.28s;
-}
-
-.hideSidebar .fixed-header {
-  width: calc(100% - 54px);
-}
-
-.mobile .fixed-header {
-  width: 100%;
+  .header {
+    height: 52px;
+    padding: 0;
+  }
+  &-sm {
+    height: 48px;
+  }
+  &-lg {
+    height: 56px;
+  }
+  .app-main {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 10px 0;
+    box-sizing: border-box;
+  }
 }
 </style>

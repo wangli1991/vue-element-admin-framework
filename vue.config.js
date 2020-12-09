@@ -1,8 +1,19 @@
 "use strict";
 const path = require("path");
+// 主题换肤
+const webpack = require("webpack");
+const ThemeColorReplacer = require("webpack-theme-color-replacer");
+const forElementUI = require("webpack-theme-color-replacer/forElementUI");
+const themeConfig = require("./config/theme");
+
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 function resolve(dir) {
   return path.join(__dirname, dir);
+}
+
+function assetsPath(_path) {
+  return path.posix.join("static", _path);
 }
 
 // If your port is set to 80,
@@ -11,24 +22,23 @@ function resolve(dir) {
 // You can change the port by the following method:
 // port = 9527 npm run dev OR npm run dev --port = 9527
 const port = process.env.port || process.env.npm_config_port || 9527; // dev port
-
 // All configuration item explanations can be find in https://cli.vuejs.org/config/
 module.exports = {
-  /**
-   * You will need to set publicPath if you plan to deploy your site under a sub path,
-   * for example GitHub Pages. If you plan to deploy your site to https://foo.github.io/bar/,
-   * then publicPath should be set to "/bar/".
-   * In most cases please use '/' !!!
-   * Detail: https://cli.vuejs.org/config/#publicpath
-   */
+  /* 部署生产环境和开发环境下的URL：可对当前环境进行区分，baseUrl 从 Vue CLI 3.3 起已弃用，要使用publicPath */
   publicPath: "/",
+  /* 输出文件目录：在npm run build时，生成文件的目录名称 */
   outputDir: "dist",
+  /* 放置生成的静态资源 (js、css、img、fonts) 的 (相对于 outputDir 的) 目录 */
   assetsDir: "static",
+  /* 代码保存时进行eslint检测 */
   lintOnSave: process.env.NODE_ENV === "development",
+  /* 是否在构建生产包时生成 sourceMap 文件，false将提高构建速度 */
   productionSourceMap: false,
+  /* webpack-dev-server 相关配置 */
   devServer: {
     hot: true,
     port: port,
+    /* 自动打开浏览器 */
     open: true,
     overlay: {
       warnings: false,
@@ -46,15 +56,33 @@ module.exports = {
           // '^/api/[a-zA-Z_]+/': '/' // 本地开发，不走网关，直接调本地服务
         }
       }
-    },
-    before: require("./mock/mock-server.js")
+    }
+    // before: require("./mock/mock-server.js")
   },
   configureWebpack: {
     resolve: {
       alias: {
-        "@": resolve("src")
+        "@": resolve("src"),
+        "@SYS": resolve("src/modules/sys")
       }
-    }
+    },
+    plugins: [
+      new webpack.DefinePlugin({
+        "process.env": {
+          $THEME_COLOR: JSON.stringify(themeConfig.themeColor)
+        },
+        $THEME_COLOR: JSON.stringify(themeConfig.themeColor)
+      }),
+      // 生成仅包含颜色的替换样式（主题色等）
+      new ThemeColorReplacer({
+        fileName: assetsPath("css/theme-colors.css"),
+        matchColors: [
+          ...forElementUI.getElementUISeries(themeConfig.themeColor), // element-ui 主题色
+          themeConfig.themeColor // 自定义主题色
+        ],
+        changeSelector: forElementUI.changeSelector
+      })
+    ]
   },
   chainWebpack(config) {
     // it can improve the speed of the first screen, it is recommended to turn on preload
@@ -126,5 +154,13 @@ module.exports = {
       // https:// webpack.js.org/configuration/optimization/#optimizationruntimechunk
       config.optimization.runtimeChunk("single");
     });
+  },
+  /* sass，scss，less的配置 */
+  css: {
+    loaderOptions: {
+      scss: {
+        prependData: `$THEME_COLOR: ${themeConfig.themeColor};@import "~@/assets/css/variables.scss";`
+      }
+    }
   }
 };

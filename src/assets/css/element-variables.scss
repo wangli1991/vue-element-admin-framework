@@ -1,0 +1,37 @@
+$--color-primary: $primaryColor;
+
+$--color-success: $successColor;
+$--color-warning: $warningColor;
+$--color-danger: $errorColor;
+$--color-info: #909090;
+
+$--font-size-base: $textSize;
+$--font-size-small: $textSize;
+$--input-small-font-size: $--font-size-small;
+$--button-small-font-size: $--font-size-small;
+
+$--color-text-primary: $textColor;
+$--color-text-regular: #606060;
+$--color-text-secondary: #979797;
+$--color-text-placeholder: #b8b8b8;
+$--disabled-color-base: $textColor;
+
+$--border-color-base: $borderColor;
+$--border-color-light: $borderColor;
+$--border-color-lighter: $borderColorSecondary;
+
+$--border-radius-base: $borderRadius;
+$--button-small-border-radius: $--border-radius-base;
+$--button-mini-border-radius: $--border-radius-base;
+$--button-small-padding-vertical: 8px;
+
+$--background-color-base: $backgroundColor;
+$--table-border-color: $borderColorSecondary;
+
+$--checkbox-disabled-checked-icon-color: #333;
+$--radio-disabled-checked-icon-color: #666;
+
+/* icon font path, required */
+$--font-path: "~element-ui/lib/theme-chalk/fonts";
+
+@import "~element-ui/packages/theme-chalk/src/index";

@@ -2,7 +2,7 @@
  * @Author: 王利
  * @Date: 2020-10-26 15:09:10
  * @LastEditors: 王利
- * @LastEditTime: 2020-11-27 13:17:55
+ * @LastEditTime: 2020-12-04 16:34:46
  */
 import Vue from "vue";
 import store from "@/store";
@@ -26,10 +26,8 @@ function checkNeed() {
 
 if (checkNeed()) {
   Vue.config.errorHandler = function(err, vm, info, a) {
-    // Don't ask me why I use Vue.nextTick, it just a hack.
-    // detail see https://forum.vuejs.org/t/dispatch-in-vue-config-errorhandler-has-some-problem/23500
     Vue.nextTick(() => {
-      store.dispatch("errorLog/addErrorLog", {
+      store.dispatch("app/addErrorLog", {
         err,
         vm,
         info,

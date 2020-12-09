@@ -1,5 +1,16 @@
+<!--
+ * @Author: 王利
+ * @Date: 2020-10-26 15:09:27
+ * @LastEditors: 王利
+ * @LastEditTime: 2020-12-09 06:19:24
+-->
 <template>
-  <section class="app-main">
+  <section class="main-wrap">
+    <breadcrumb
+      v-if="config.showBreadcrumb"
+      id="breadcrumb-container"
+      class="breadcrumb-container"
+    />
     <transition name="fade-transform" mode="out-in">
       <keep-alive :include="cachedViews">
         <router-view :key="key" />
@@ -9,8 +20,16 @@
 </template>
 
 <script>
+import Breadcrumb from "../../components/Breadcrumb";
+import config from "@/config";
+
 export default {
-  name: "AppMain",
+  components: { Breadcrumb },
+  data() {
+    return {
+      config: config
+    };
+  },
   computed: {
     cachedViews() {
       return this.$store.state.tagsView.cachedViews;
@@ -22,35 +41,13 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
-.app-main {
-  /* 50= navbar  50  */
-  min-height: calc(100vh - 50px);
-  width: 100%;
-  position: relative;
-  overflow: hidden;
-}
-
-.fixed-header + .app-main {
-  padding-top: 50px;
-}
-
-.hasTagsView {
-  .app-main {
-    /* 84 = navbar + tags-view = 50 + 34 */
-    min-height: calc(100vh - 84px);
-  }
-
-  .fixed-header + .app-main {
-    padding-top: 84px;
-  }
-}
-</style>
-
 <style lang="scss">
+.main-wrap {
+  height: calc(100%);
+}
 // fix css style bug in open el-dialog
 .el-popup-parent--hidden {
-  .fixed-header {
+  .header {
     padding-right: 15px;
   }
 }

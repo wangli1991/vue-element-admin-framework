@@ -2,38 +2,31 @@
  * @Author: 王利
  * @Date: 2020-10-26 15:09:10
  * @LastEditors: 王利
- * @LastEditTime: 2020-11-27 09:25:22
+ * @LastEditTime: 2020-12-08 14:40:04
  */
 import Vue from "vue";
-
-import Cookies from "js-cookie";
-
-import "normalize.css/normalize.css"; // a modern alternative to CSS resets
-
-import Element from "element-ui";
-import "@/styles/element-variables.scss";
-
-import "@/styles/index.scss"; // global css
-
 import App from "@/App";
 import store from "@/store";
-import router from "@/router";
+import router from "@/routes";
+import * as filters from "@/filters";
+import "@/routes/permission";
+import "@/config/use";
+// 自定义主题
+import "@/icons";
+// a modern alternative to CSS resets
+import "normalize.css/normalize.css";
+// global css
+import "@/assets/css/index.scss";
+// error log
+import "@/utils/error-log";
+import global from "@/mixins/globalMixin";
+Vue.mixin(global);
 
-import "@/icons"; // icon
-import "@/router/permission"; // permission control
-import "@/utils/error-log"; // error log
-
-import * as filters from "./filters"; // global filters
-
-Vue.use(Element, {
-  size: Cookies.get("size") || "medium" // set element-ui default size
-});
-
-// register global utility filters
+// 全局过滤
 Object.keys(filters).forEach(key => {
   Vue.filter(key, filters[key]);
 });
-
+// 关闭生产环境的提示
 Vue.config.productionTip = false;
 
 new Vue({

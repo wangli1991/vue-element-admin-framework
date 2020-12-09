@@ -1,23 +1,30 @@
 <template>
   <div class="navbar">
-    <hamburger class="hamburger-container" />
-
-    <breadcrumb v-if="config.showBreadcrumb" class="breadcrumb-container" />
-
+    <hamburger class="hamburger-container hover-effect" />
+    <tags-view v-if="needTagsView" />
     <div class="right-menu">
       <head-search v-if="config.showBreadcrumb" class="right-menu-item" />
 
-      <error-log class="errLog-container right-menu-item hover-effect" />
-
-      <screenfull
+      <el-tooltip content="错误日志" effect="dark" placement="bottom">
+        <error-log class="right-menu-item hover-effect" />
+      </el-tooltip>
+      <el-tooltip
         v-if="config.showScreenFull"
-        class="right-menu-item hover-effect"
-      />
+        content="页面全屏"
+        effect="dark"
+        placement="bottom"
+      >
+        <screenfull class="right-menu-item hover-effect" />
+      </el-tooltip>
 
-      <theme-picker
+      <el-tooltip
         v-if="config.showThemePicker"
-        class="right-menu-item hover-effect"
-      />
+        content="主题切换"
+        effect="dark"
+        placement="bottom"
+      >
+        <theme-picker class="right-menu-item hover-effect" />
+      </el-tooltip>
 
       <el-tooltip
         v-if="config.showSizeSelect"
@@ -27,28 +34,15 @@
       >
         <size-select class="right-menu-item hover-effect" />
       </el-tooltip>
-
-      <el-dropdown
-        size="medium"
-        class="avatar-container right-menu-item hover-effect"
-        trigger="click"
+      <el-tooltip
+        v-if="config.showNotification"
+        content="系统消息"
+        effect="dark"
+        placement="bottom"
       >
-        <div class="avatar-wrapper">
-          <img :src="avatar" class="user-avatar" />
-          <i class="el-icon-caret-bottom" />
-        </div>
-        <el-dropdown-menu slot="dropdown">
-          <router-link to="/profile/index">
-            <el-dropdown-item>个人中心</el-dropdown-item>
-          </router-link>
-          <router-link to="/">
-            <el-dropdown-item>首页</el-dropdown-item>
-          </router-link>
-          <el-dropdown-item divided @click.native="logout">
-            <span>退出登录</span>
-          </el-dropdown-item>
-        </el-dropdown-menu>
-      </el-dropdown>
+        <notice-center class="right-menu-item hover-effect" />
+      </el-tooltip>
+      <user-center />
     </div>
   </div>
 </template>
@@ -57,51 +51,50 @@
 import config from "@/config";
 import { mapGetters } from "vuex";
 import {
-  Breadcrumb,
   Hamburger,
+  TagsView,
   ErrorLog,
   Screenfull,
   ThemePicker,
   SizeSelect,
-  HeadSearch
+  HeadSearch,
+  NoticeCenter
 } from "../../components";
+import UserCenter from "@/pages/UserCenter";
 
 export default {
   components: {
-    Breadcrumb,
     Hamburger,
+    TagsView,
     ErrorLog,
     Screenfull,
     ThemePicker,
     SizeSelect,
-    HeadSearch
+    HeadSearch,
+    NoticeCenter,
+    UserCenter
   },
   computed: {
-    ...mapGetters(["avatar"]),
     config() {
       return config;
+    },
+    needTagsView() {
+      return config.showTagsView;
     }
   },
-  methods: {
-    async logout() {
-      await this.$store.dispatch("user/logout");
-      this.$router.push(`/login?redirect=${this.$route.fullPath}`);
-    }
-  }
+  methods: {}
 };
 </script>
 
 <style lang="scss" scoped>
 .navbar {
   height: 50px;
-  overflow: hidden;
   position: relative;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
-
+  border-bottom: 1px solid #d9d9d9;
   .hamburger-container {
     line-height: 46px;
-    height: 100%;
+    height: 50px;
     float: left;
     cursor: pointer;
     transition: background 0.3s;
@@ -124,52 +117,24 @@ export default {
   .right-menu {
     float: right;
     height: 100%;
-    line-height: 50px;
     display: flex;
     align-items: center;
+    margin-right: 10px;
     &:focus {
       outline: none;
     }
 
     .right-menu-item {
-      height: 100%;
-      padding: 0 8px;
-      font-size: 18px;
-      color: #5a5e66;
+      font-size: 16px;
+      color: #606060;
+      text-align: center;
+      width: 26px;
+      height: 26px;
       display: flex;
+      justify-content: center;
       align-items: center;
-      &.hover-effect {
-        cursor: pointer;
-        transition: background 0.3s;
-
-        &:hover {
-          background: rgba(0, 0, 0, 0.025);
-        }
-      }
-    }
-
-    .avatar-container {
-      margin-right: 30px;
-
-      .avatar-wrapper {
-        margin-top: 5px;
-        position: relative;
-
-        .user-avatar {
-          cursor: pointer;
-          width: 40px;
-          height: 40px;
-          border-radius: 10px;
-        }
-
-        .el-icon-caret-bottom {
-          cursor: pointer;
-          position: absolute;
-          right: -20px;
-          top: 25px;
-          font-size: 12px;
-        }
-      }
+      cursor: pointer;
+      margin: 0 2px;
     }
   }
 }

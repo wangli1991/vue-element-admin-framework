@@ -1,57 +1,64 @@
 <template>
-  <div id="tags-view-container" class="tags-view-container">
-    <scroll-pane
-      ref="scrollPane"
-      class="tags-view-wrapper"
-      @scroll="handleScroll"
+  <div :class="noticeCls">
+    <el-tabs
+      ref="tagsView"
+      v-model="activeName"
+      class="tags-view-tab"
+      type="card"
+      @tab-click="linkSelectedTag"
+      @tab-remove="closeSelectedTag"
     >
-      <router-link
-        v-for="tag in visitedViews"
-        ref="tag"
-        :key="tag.path"
-        :class="isActive(tag) ? 'active' : ''"
-        :to="{ path: tag.path, query: tag.query, fullPath: tag.fullPath }"
-        tag="span"
-        class="tags-view-item"
-        @click.middle.native="!isAffix(tag) ? closeSelectedTag(tag) : ''"
-        @contextmenu.prevent.native="openMenu(tag, $event)"
+      <el-tab-pane
+        v-for="item in visitedViews"
+        :key="item.path"
+        :label="item.title"
+        :name="item.path"
+        :closable="!isAffix(item)"
       >
-        {{ tag.title }}
-        <span
-          v-if="!isAffix(tag)"
-          class="el-icon-close"
-          @click.prevent.stop="closeSelectedTag(tag)"
-        />
-      </router-link>
-    </scroll-pane>
+      </el-tab-pane>
+    </el-tabs>
     <ul
       v-show="visible"
       :style="{ left: left + 'px', top: top + 'px' }"
       class="contextmenu"
     >
-      <li @click="refreshSelectedTag(selectedTag)">Refresh</li>
-      <li v-if="!isAffix(selectedTag)" @click="closeSelectedTag(selectedTag)">
-        Close
+      <li @click="refreshSelectedTag(selectedTag)">刷新当前</li>
+      <li @click="closeOthersTags">关闭其它</li>
+      <li @click="closeAllTags(selectedTag)">关闭所有</li>
+      <li
+        v-if="selectedTagIndex != 'first' && selectedTagIndex != 'none'"
+        @click="closeLeftTags"
+      >
+        关闭左侧
       </li>
-      <li @click="closeOthersTags">Close Others</li>
-      <li @click="closeAllTags(selectedTag)">Close All</li>
+      <li
+        v-if="selectedTagIndex != 'last' && selectedTagIndex != 'none'"
+        @click="closeRightTags"
+      >
+        关闭右侧
+      </li>
     </ul>
   </div>
 </template>
 
 <script>
-import ScrollPane from "./ScrollPane";
 import path from "path";
+import addEventListener from "add-dom-event-listener";
+import { size } from "@/mixins/sizeMixin";
+import { mapState, mapActions } from "vuex";
 
 export default {
-  components: { ScrollPane },
+  mixins: [size],
   data() {
     return {
       visible: false,
       top: 0,
       left: 0,
       selectedTag: {},
-      affixTags: []
+      affixTags: [],
+      selectedTagIndex: "",
+      contextmenuEvent: null,
+      activeName: ""
     };
   },
   computed: {
@@ -60,12 +67,22 @@ export default {
     },
     routes() {
       return this.$store.state.permission.routes;
+    },
+    $tagsView() {
+      return this.$refs.tagsView.$el;
+    },
+    noticeCls() {
+      return {
+        [`tags-view-container`]: !0,
+        [`tags-view-container-sm`]: this.currentSize === "small",
+        [`tags-view-container-lg`]: this.currentSize === "large"
+      };
     }
   },
   watch: {
-    $route() {
+    $route(route) {
+      this.activeName = route.path;
       this.addTags();
-      this.moveToCurrentTag();
     },
     visible(value) {
       if (value) {
@@ -78,28 +95,42 @@ export default {
   mounted() {
     this.initTags();
     this.addTags();
+    this.bindContextmenuEvent();
+    this.activeName = this.$route.path;
+  },
+  destroyed() {
+    this.contextmenuEvent.remove();
   },
   methods: {
+    ...mapActions("tagsView", [
+      "addVisitedView",
+      "addView",
+      "delOthersViews",
+      "delRightViews",
+      "delLeftViews",
+      "delAllViews",
+      "delView",
+      "refreshView"
+    ]),
     isActive(route) {
       return route.path === this.$route.path;
     },
     isAffix(tag) {
       return tag.meta && tag.meta.affix;
     },
-    filterAffixTags(routes, basePath = "/") {
+    filterAffixTags(routes) {
       let tags = [];
       routes.forEach(route => {
         if (route.meta && route.meta.affix) {
-          const tagPath = path.resolve(basePath, route.path);
           tags.push({
-            fullPath: tagPath,
-            path: tagPath,
+            fullPath: route.path,
+            path: route.path,
             name: route.name,
             meta: { ...route.meta }
           });
         }
         if (route.children) {
-          const tempTags = this.filterAffixTags(route.children, route.path);
+          const tempTags = this.filterAffixTags(route.children);
           if (tempTags.length >= 1) {
             tags = [...tags, ...tempTags];
           }
@@ -108,65 +139,89 @@ export default {
       return tags;
     },
     initTags() {
-      const affixTags = (this.affixTags = this.filterAffixTags(this.routes));
-      for (const tag of affixTags) {
-        // Must have tag name
-        if (tag.name) {
-          this.$store.dispatch("tagsView/addVisitedView", tag);
+      const tabList = JSON.parse(sessionStorage.getItem("tabNav"));
+      if (!tabList) {
+        const affixTags = (this.affixTags = this.filterAffixTags(this.routes));
+        for (const tag of affixTags) {
+          if (tag.name) {
+            this.addVisitedView(tag);
+          }
         }
+        return;
       }
+      tabList.map(x => {
+        this.addVisitedView(x);
+      });
     },
     addTags() {
       const { name } = this.$route;
       if (name) {
-        this.$store.dispatch("tagsView/addView", this.$route);
+        this.addView(this.$route);
       }
       return false;
     },
-    moveToCurrentTag() {
-      const tags = this.$refs.tag;
-      this.$nextTick(() => {
-        for (const tag of tags) {
-          if (tag.to.path === this.$route.path) {
-            this.$refs.scrollPane.moveToTarget(tag);
-            // when query is different then update
-            if (tag.to.fullPath !== this.$route.fullPath) {
-              this.$store.dispatch("tagsView/updateVisitedView", this.$route);
-            }
-            break;
-          }
-        }
+    linkSelectedTag(tab) {
+      const route = this.visitedViews.filter(
+        item => item.fullPath === tab.name
+      )[0];
+      this.$router.push({
+        path: route.path,
+        query: route.query,
+        fullPath: route.fullPath
       });
     },
     refreshSelectedTag(view) {
-      this.$store.dispatch("tagsView/delCachedView", view).then(() => {
-        const { fullPath } = view;
-        this.$nextTick(() => {
-          this.$router.replace({
-            path: "/redirect" + fullPath
-          });
-        });
+      this.refreshView(view);
+    },
+    closeSelectedTag(path) {
+      const view = this.visitedViews.filter(item => item.fullPath === path)[0];
+      this.delView(view).then(({ visitedViews }) => {
+        if (this.isActive(view)) {
+          this.toLastView(visitedViews, view);
+        }
       });
     },
-    closeSelectedTag(view) {
-      this.$store
-        .dispatch("tagsView/delView", view)
-        .then(({ visitedViews }) => {
-          if (this.isActive(view)) {
-            this.toLastView(visitedViews, view);
-          }
-        });
+    closeOthersTags(view) {
+      const activeViews = this.visitedViews.filter(
+        x =>
+          this.isActive(x) &&
+          !this.isAffix(x) &&
+          this.selectedTag.fullPath != x.fullPath
+      );
+      this.delOthersViews(this.selectedTag).then(() => {
+        if (activeViews.length > 0) {
+          this.$router.push(this.selectedTag);
+        }
+      });
     },
-    closeOthersTags() {
-      this.$router.push(this.selectedTag);
-      this.$store
-        .dispatch("tagsView/delOthersViews", this.selectedTag)
-        .then(() => {
-          this.moveToCurrentTag();
-        });
+    closeRightTags() {
+      const index = this.visitedViews.findIndex(
+        x => x.path === this.selectedTag.path
+      );
+      const activeViews = this.visitedViews
+        .slice(index + 1)
+        .filter(x => this.isActive(x) && !this.isAffix(x));
+      this.delOthersViews(this.selectedTag).then(() => {
+        if (activeViews.length > 0) {
+          this.$router.push(this.selectedTag);
+        }
+      });
+    },
+    closeLeftTags() {
+      const index = this.visitedViews.findIndex(
+        x => x.path === this.selectedTag.path
+      );
+      const activeViews = this.visitedViews
+        .slice(0, index)
+        .filter(x => this.isActive(x) && !this.isAffix(x));
+      this.delOthersViews(this.selectedTag).then(() => {
+        if (activeViews.length > 0) {
+          this.$router.push(this.selectedTag);
+        }
+      });
     },
     closeAllTags(view) {
-      this.$store.dispatch("tagsView/delAllViews").then(({ visitedViews }) => {
+      this.delAllViews().then(({ visitedViews }) => {
         if (this.affixTags.some(tag => tag.path === view.path)) {
           return;
         }
@@ -178,10 +233,7 @@ export default {
       if (latestView) {
         this.$router.push(latestView.fullPath);
       } else {
-        // now the default is to redirect to the home page if there is no tags-view,
-        // you can adjust it according to your needs.
         if (view.name === "Dashboard") {
-          // to reload home page
           this.$router.replace({ path: "/redirect" + view.fullPath });
         } else {
           this.$router.push("/");
@@ -189,11 +241,26 @@ export default {
       }
     },
     openMenu(tag, e) {
+      console.log(tag, e);
+      const index = this.visitedViews.findIndex(x => x.path === tag.path);
+      const selectedTagLen = this.visitedViews.length;
+      let selectedTagIndex;
+      if (selectedTagLen > 0) {
+        if (index === 0) {
+          selectedTagIndex = "first";
+        }
+        if (index >= this.visitedViews.length - 1) {
+          selectedTagIndex = "last";
+        }
+      } else {
+        selectedTagIndex = "none";
+      }
+      this.selectedTagIndex = selectedTagIndex;
       const menuMinWidth = 105;
-      const offsetLeft = this.$el.getBoundingClientRect().left; // container margin left
-      const offsetWidth = this.$el.offsetWidth; // container width
-      const maxLeft = offsetWidth - menuMinWidth; // left boundary
-      const left = e.clientX - offsetLeft + 15; // 15: margin right
+      const offsetLeft = this.$el.getBoundingClientRect().left;
+      const offsetWidth = this.$el.offsetWidth;
+      const maxLeft = offsetWidth - menuMinWidth;
+      const left = e.clientX - offsetLeft + 15;
 
       if (left > maxLeft) {
         this.left = maxLeft;
@@ -205,56 +272,46 @@ export default {
       this.visible = true;
       this.selectedTag = tag;
     },
+    bindContextmenuEvent() {
+      this.contextmenuEvent = addEventListener(
+        this.$tagsView,
+        "contextmenu",
+        ev => {
+          ev.preventDefault();
+          const classNames = [...ev.target.classList];
+          if (classNames.includes("el-tabs__item")) {
+            const path = ev.target
+              .getAttribute("aria-controls")
+              .replace(/^pane-/, "");
+            const view = this.visitedViews.filter(
+              item => item.fullPath === path
+            )[0];
+            this.openMenu(view, ev);
+          }
+        }
+      );
+    },
     closeMenu() {
       this.visible = false;
-    },
-    handleScroll() {
-      this.closeMenu();
     }
   }
 };
 </script>
-
 <style lang="scss" scoped>
 .tags-view-container {
-  height: 34px;
-  width: 100%;
+  width: calc(100% - 300px);
   background: #fff;
-  border-bottom: 1px solid #d8dce5;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 0 3px 0 rgba(0, 0, 0, 0.04);
-  .tags-view-wrapper {
-    .tags-view-item {
-      display: inline-block;
-      position: relative;
-      cursor: pointer;
-      height: 26px;
-      line-height: 26px;
-      border: 1px solid #d8dce5;
-      color: #495060;
-      background: #fff;
-      padding: 0 8px;
-      font-size: 12px;
-      margin-left: 5px;
-      margin-top: 4px;
-      &:first-of-type {
-        margin-left: 15px;
-      }
-      &:last-of-type {
-        margin-right: 15px;
-      }
-      &.active {
-        background-color: #42b983;
-        color: #fff;
-        border-color: #42b983;
-        &::before {
-          content: "";
-          background: #fff;
-          display: inline-block;
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          position: relative;
-          margin-right: 2px;
+  position: absolute;
+  left: 50px;
+  bottom: -1px;
+  ::v-deep .el-tabs__header {
+    margin: 0;
+    .el-tabs__nav {
+      .el-tabs__item {
+        height: 38px;
+        line-height: 38px;
+        &.is-active {
+          font-weight: bold;
         }
       }
     }
@@ -270,7 +327,8 @@ export default {
     font-size: 12px;
     font-weight: 400;
     color: #333;
-    box-shadow: 2px 2px 3px 0 rgba(0, 0, 0, 0.3);
+    border: 1px solid #d9d9d9;
+
     li {
       margin: 0;
       padding: 7px 16px;
@@ -280,29 +338,21 @@ export default {
       }
     }
   }
-}
-</style>
-
-<style lang="scss">
-//reset element css of el-icon-close
-.tags-view-wrapper {
-  .tags-view-item {
-    .el-icon-close {
-      width: 16px;
-      height: 16px;
-      vertical-align: 2px;
-      border-radius: 50%;
-      text-align: center;
-      transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-      transform-origin: 100% 50%;
-      &:before {
-        transform: scale(0.6);
-        display: inline-block;
-        vertical-align: -3px;
+  &.tags-view-container-lg {
+    ::v-deep .el-tabs__nav {
+      .el-tabs__item {
+        padding: 0 18px !important;
+        height: 42px !important;
+        line-height: 42px !important;
       }
-      &:hover {
-        background-color: #b4bccc;
-        color: #fff;
+    }
+  }
+  &.tags-view-container-sm {
+    ::v-deep .el-tabs__nav {
+      .el-tabs__item {
+        padding: 0 14px !important;
+        height: 34px !important;
+        line-height: 34px !important;
       }
     }
   }

@@ -2,12 +2,12 @@
  * @Author: 王利
  * @Date: 2020-11-27 10:11:20
  * @LastEditors: 王利
- * @LastEditTime: 2020-11-27 10:58:05
+ * @LastEditTime: 2020-12-04 16:38:57
 -->
 <template>
   <div style="padding: 0 15px;" @click="toggleClick">
     <svg
-      :class="{ 'is-active': sidebar.opened }"
+      :class="{ 'is-active': sidebarOpened }"
       class="hamburger"
       viewBox="0 0 1024 1024"
       xmlns="http://www.w3.org/2000/svg"
@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { mapState, mapActions } from "vuex";
 
 export default {
   name: "Hamburger",
@@ -33,11 +33,12 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(["sidebar"])
+    ...mapState("app", ["sidebarOpened"])
   },
   methods: {
+    ...mapActions("app", ["toggleSideBar"]),
     toggleClick() {
-      this.$store.dispatch("app/toggleSideBar");
+      this.toggleSideBar();
     }
   }
 };
