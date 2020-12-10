@@ -2,7 +2,7 @@
  * @Author: 王利
  * @Date: 2020-10-26 15:09:10
  * @LastEditors: 王利
- * @LastEditTime: 2020-12-08 14:57:44
+ * @LastEditTime: 2020-12-10 05:52:19
 -->
 <template>
   <el-container class="layout">
@@ -71,12 +71,10 @@ export default {
     height: 56px;
   }
   .app-main {
-    flex: 1;
-    overflow: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    padding: 10px 10px 0;
-    box-sizing: border-box;
+    padding: 0;
   }
 }
 </style>

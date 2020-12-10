@@ -2,12 +2,13 @@
  * @Author: 王利
  * @Date: 2020-08-10 14:32:43
  * @LastEditors: 王利
- * @LastEditTime: 2020-12-08 12:30:55
+ * @LastEditTime: 2020-12-09 12:51:37
  */
 import { default as Drawer } from "./Drawer";
 import { default as BaseDialog } from "./BaseDialog";
 import { default as FormPanel } from "./FormPanel";
 import { default as VirtualTable } from "./VirtualTable";
+
 const components = [Drawer, BaseDialog, FormPanel, VirtualTable];
 const install = function(Vue, opts = {}) {
   components.forEach(component => {

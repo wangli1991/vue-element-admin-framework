@@ -2,14 +2,15 @@
  * @Author: 王利
  * @Date: 2020-07-20 06:38:17
  * @LastEditors: 王利
- * @LastEditTime: 2020-12-07 15:55:49
+ * @LastEditTime: 2020-12-09 22:01:26
 -->
 <template>
   <div>
-    <split-pane direction="column">
+    <split-pane direction="column" @paneChange="handleSplitPaneChange">
       <template v-slot:left>
         <virtual-table
           ref="table"
+          :height="tableTopHeight"
           :columns="columns"
           topSpaceAlign="left"
           :rowSelection="selection"
@@ -26,6 +27,7 @@
       <template v-slot:right>
         <virtual-table
           ref="subTable"
+          :height="tableBottomHeight"
           :columns="subColumns"
           rowKey="id"
           :fetch="subFetch"
@@ -52,11 +54,13 @@
 <script>
 import { getList, getSubList, del } from "@SYS/api/dictionary";
 import SplitPane from "@/components/SplitPane";
+import { splitPaneData } from "@/components/SplitPane/mixin";
 import AddInfo from "./components/addInfo";
 import { notifyAction, confirmAction, deepClone } from "@/utils";
 let selectedDict;
 export default {
   components: { SplitPane, AddInfo },
+  mixins: [splitPaneData],
   data() {
     return {
       columns: this.createTableColumns(),

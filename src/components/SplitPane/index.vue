@@ -78,15 +78,12 @@ export default {
     calculateHeight() {
       this.$nextTick(() => {
         if (this.direction === "column") {
-          console.log(document.body.offsetHeight, this.$splitPane.offsetTop);
-
           this.targetOffset =
             document.body.offsetHeight - this.$splitPane.offsetTop;
           let topHeight = parseInt((this.targetOffset * this.percent) / 100);
           let bottomHeight = parseInt(
             (this.targetOffset * (100 - this.percent)) / 100
           );
-
           this.$emit("paneChange", topHeight, bottomHeight);
         }
       });

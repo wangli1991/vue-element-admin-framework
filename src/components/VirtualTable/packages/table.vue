@@ -2,11 +2,11 @@
  * @Author: 王利
  * @Date: 2020-08-10 14:28:54
  * @LastEditors: 王利
- * @LastEditTime: 2020-12-08 10:32:29
+ * @LastEditTime: 2020-12-10 06:39:02
 -->
 <template>
   <div class="table-container">
-    <div class="v-top-info">
+    <div ref="vTopInfo" class="v-top-info">
       <div class="v-space">
         <div class="v-slot" :style="{ 'text-align': topSpaceAlign }">
           <slot />
@@ -260,6 +260,9 @@ export default {
     topSpaceAlign: {
       type: String,
       default: "right"
+    },
+    height: {
+      type: [String, Number]
     }
   },
   data() {
@@ -268,7 +271,6 @@ export default {
         width: "100%",
         height: "100%"
       },
-      tableHeight: 250,
       list: [
         {
           id: "1"
@@ -286,10 +288,18 @@ export default {
       tableFetch: { ...this.fetch },
       tableFullscreen: false,
       editIndex: "",
-      editProp: ""
+      editProp: "",
+      tableHeight: this.height
     };
   },
-  computed: {},
+  computed: {
+    $vTable() {
+      return this.$refs.vTable;
+    },
+    $vTopInfo() {
+      return this.$refs.vTopInfo;
+    }
+  },
   watch: {
     fetch: {
       handler(val) {
@@ -319,15 +329,28 @@ export default {
     },
     dataSource(val) {
       this.list = val;
+    },
+    height(val) {
+      if (this.height !== "auto") {
+        this.tableHeight = val;
+      }
     }
   },
-  mounted() {},
   created() {
     if (this.fetch.api) {
       this.tableFetch.params = Object.assign({}, this.tableFetch.params, {
         platform: "PC"
       });
       this.getList();
+    }
+  },
+  mounted() {
+    if (this.height === "auto") {
+      this.$nextTick(() => {
+        const topInfoHeight = this.$vTopInfo.offsetHeight;
+        const tableWrapTop = this.$vTable.offsetTop;
+        this.tableHeight = window.innerHeight - tableWrapTop - 40;
+      });
     }
   },
   methods: {
@@ -354,8 +377,6 @@ export default {
         this.list = data[this.tableFetch.dataKey];
         this.total = data.total;
       }
-      // 设置table高度
-      this.tableHeight = this.$refs.vTable.offsetHeight - 40;
       // 隐藏loading
       this.listLoading = false;
     },
@@ -561,25 +582,13 @@ export default {
 ::v-deep .v-table {
   width: 100%;
   flex: 1;
-  // display: flex;
-  // flex-direction: column;
-  // .el-scrollbar {
-  //   flex: 1;
-  //   .el-scrollbar__view {
-  //     height: 100%;
-  //     .el-table {
-  //       height: 100%;
-  //       display: flex;
-  //       flex-direction: column;
-  //       .el-table__body-wrapper {
-  //         flex: 1;
-  //         overflow-x: auto;
-  //       }
-  //     }
-  //   }
-  // }
   .el-radio__label {
     display: none;
+  }
+  .el-table {
+    th {
+      background-color: #fafafa;
+    }
   }
 }
 </style>

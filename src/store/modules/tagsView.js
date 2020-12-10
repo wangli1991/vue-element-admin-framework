@@ -161,13 +161,10 @@ const actions = {
       resolve([...state.visitedViews]);
     });
   },
-  delCachedView({ commit, state }, view) {
-    return new Promise(resolve => {
-      commit({
-        type: types.DEL_CACHED_VIEW,
-        data: view
-      });
-      resolve([...state.cachedViews]);
+  delCachedView({ commit }, view) {
+    commit({
+      type: types.DEL_CACHED_VIEW,
+      data: view
     });
   },
 

@@ -1,8 +1,8 @@
 /*
- * @Author: 孙锦涵
- * @Date: 2020-08-13 12:43:44
- * @LastEditors: 孙锦涵
- * @LastEditTime: 2020-08-18 09:50:40
+ * @Author: 王利
+ * @Date: 2020-12-08 12:52:10
+ * @LastEditors: 王利
+ * @LastEditTime: 2020-12-09 21:53:08
  */
 export const splitPaneData = {
   data() {
